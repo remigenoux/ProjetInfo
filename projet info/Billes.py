@@ -2,7 +2,7 @@ import numpy as  np
 
 def scalaire(u,v):
     return u[0]*v[0]+u[1]*v[1]
-def norme(u):
+def norme2(u):
     return (u[0]**2+u[1]**2)**0.5
 # on définit le produit scalaire classique et la norme 2 pour les réutiliser plus tard
 
@@ -30,10 +30,14 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
     @coords.setter
     def coords(self,nouv_coords):
         x,y,valmax = nouv_coords
-        x = min(x , valmax[0] - self._taille)
-        x = max(x , self._taille)
-        y = min(y , valmax[1] - self._taille)
-        y = max(y , self._taille)
+        if x > valmax[0] - self._taille :
+            x = valmax[0] - self._taille
+        if x < self._taille:
+            x =  self._taille
+        if y > valmax[1] - self._taille :
+            y = valmax[1] - self._taille
+        if y < self._taille:
+            y =  self._taille
         self.__coords = (x , y)
 
     def coul(self): # la couleur par défaut est Blanche
@@ -43,7 +47,7 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
         return(self.__v)
     @v.setter
     def v(self,valeur_vitesse):
-        if valeur_vitesse <= 0 :
+        if valeur_vitesse <= 5 :
             self.__v = 0
         else :
             self.__v = valeur_vitesse
@@ -52,13 +56,14 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
 
     def axe(self, boule2):                      # cette fonction définit le vecteur porteur de l'axe passant par les deux centres de gravités des billes, orienté dans le sens de la vitesse (produit scalaire positif), il est utile pour défnir la direction de la vitesse d'une boule immobile après un contact
         axe = (self.x-boule2.x,self.y-boule2.y) # on calcule le vecteur porteur de l'axe
-        axe = (axe[0]/ norme(axe),axe[1]/ norme(axe))     # on normalise ce vecteur
+        axe = (axe[0]/ norme2(axe),axe[1]/ norme2(axe))     # on normalise ce vecteur
         return axe
 
 
 
     def contact_boule(self,boule2):
         self.attenuation
+        print('je dois pas être la')
         axe = self.axe(boule2)
 
         if boule2.v != 0 :
@@ -70,24 +75,25 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
             vitesse_1_ref2 = (vitesse_1_ref1[0] - vitesse_2_ref1[0],vitesse_1_ref1[1] - vitesse_2_ref1[1])  #passage dans le référentiel de la boule 2
             #la boule 2 est immobile dans le référentiel 2
 
-            norme_vitesse_1_ref2 = norme(vitesse_1_ref2)
+            norme_vitesse_1_ref2 = norme2(vitesse_1_ref2)
             direction_vitesse_1_ref2 =( vitesse_1_ref2[0]/norme_vitesse_1_ref2 , vitesse_1_ref2[1]/norme_vitesse_1_ref2)
 
             if scalaire(axe, direction_vitesse_1_ref2) < 0:  # on le met dans le sens de la vitesse
                 axe = (-axe[0],-axe[1])
 
             vitesse_2_ref2_apres_contact = (scalaire(axe,direction_vitesse_1_ref2) * vitesse_1_ref2[0] , scalaire(axe,direction_vitesse_1_ref2) * vitesse_1_ref2[1])
-            vitesse_1_ref2_apres_contact = ((direction_vitesse_1_ref2[0] - axe[0]) / norme((direction_vitesse_1_ref2[0] - axe[0], direction_vitesse_1_ref2[1] - axe[1])) * (1-scalaire(axe,direction_vitesse_1_ref2) ) * norme_vitesse_1_ref2,
-                                            (direction_vitesse_1_ref2[1] - axe[1]) / norme((direction_vitesse_1_ref2[0] - axe[0],direction_vitesse_1_ref2[1] -axe[1])) * (1-scalaire(axe,direction_vitesse_1_ref2) ) * norme_vitesse_1_ref2)
+            vitesse_1_ref2_apres_contact = ((direction_vitesse_1_ref2[0] - axe[0]) / norme2((direction_vitesse_1_ref2[0] - axe[0], direction_vitesse_1_ref2[1] - axe[1])) * (1-scalaire(axe,direction_vitesse_1_ref2) ) * norme_vitesse_1_ref2,
+                                            (direction_vitesse_1_ref2[1] - axe[1]) / norme2((direction_vitesse_1_ref2[0] - axe[0],direction_vitesse_1_ref2[1] -axe[1])) * (1-scalaire(axe,direction_vitesse_1_ref2) ) * norme_vitesse_1_ref2)
 
             vitesse_2_ref1_apres_contact = (vitesse_2_ref2_apres_contact[0] + vitesse_2_ref1[0] , vitesse_2_ref2_apres_contact[1] + vitesse_2_ref1[1])
             vitesse_1_ref1_apres_contact = (vitesse_1_ref2_apres_contact[0] + vitesse_2_ref1[0] , vitesse_1_ref2_apres_contact[1] + vitesse_2_ref1[1])
 
-            boule2.v = norme(vitesse_2_ref1_apres_contact)
-            boule2.direction = (vitesse_2_ref1_apres_contact[0]/boule2.v , vitesse_2_ref1_apres_contact[1]/boule2.v)
+            boule2.v = norme2(vitesse_2_ref1_apres_contact)
+            if boule2.v != 0 :
+                boule2.direction = (vitesse_2_ref1_apres_contact[0]/boule2.v , vitesse_2_ref1_apres_contact[1]/boule2.v)
 
 
-            self.v = norme(vitesse_1_ref1_apres_contact)
+            self.v = norme2(vitesse_1_ref1_apres_contact)
             self.direction =  (vitesse_1_ref1_apres_contact[0]/self.v , vitesse_1_ref1_apres_contact[1]/self.v)
 
         elif boule2.v == 0 :
@@ -95,12 +101,13 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
                 axe = (-axe[0],-axe[1])
             boule2.v = scalaire(axe,self.direction) * self.v  # on a ommis la division par le produit des normes des directions qui doit être égal à 1
             boule2.direction = axe
-            self.direction = ((self.direction[0] - axe[0])/ norme((self.direction[0] - axe[0] , self.direction[1] - axe[1])),(self.direction[1] - axe[1])/ norme((self.direction[0] - axe[0] , self.direction[1] - axe[1])))
-            self.v = self.v*(1-scalaire(axe,self.direction))
+            self.v = self.v * (1 - abs(scalaire(axe, self.direction)))
+            self.direction = ((self.direction[0] - axe[0])/ norme2((self.direction[0] - axe[0] , self.direction[1] - axe[1])),(self.direction[1] - axe[1])/ norme2((self.direction[0] - axe[0] , self.direction[1] - axe[1])))
 
-        elif self is Blanche :
+            print('scalaire',scalaire(axe,self.direction), norme2(self.direction))
+        if self.coul == 'Blanche' :
             boule2.coul = self.attribut
-        elif boule2 is Blanche :
+        if boule2.coul == 'Blanche' :
             self.coul = boule2.attribut
 
 
@@ -108,7 +115,7 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
 
     def contact_mur(self,valmax):  # cette fonction sert à modéliser le comportement d'une bille après un contact sur une bande
         xmax,ymax = valmax
-        self.attenuation()  # la vitesse est atténuée comme après chaque choc
+          # la vitesse est atténuée comme après chaque choc
         x, y = self.x, self.y
         r = self._taille
         cote = []
@@ -124,10 +131,12 @@ class Bille () : # cette classe définit le comportement des billes à l'intéri
         for e in cote:  # Pour chaque rebond sur chaque côté, la bande renvoie parfaitement la composante normale de la vitesse qu'elle a reçu ( elle la transforme en son opposée)
             if e == 'g' or e == 'd':
                 self.direction = (- self.direction[0], self.direction[1])
+                self.attenuation()
                 print('je change dir x ')
             if e == 'h' or e == 'b':
                 self.direction = (self.direction[0], - self.direction[1])
-                print('je change dir y ')
+                self.attenuation()
+                print('je change direction y ')
 
 
 class Blanche (Bille):          # Cette sous classe hérite de Bille et décrit plus particulièrement la bille Blanche
@@ -149,4 +158,5 @@ class Rouge (Bille):# Cette sous classe hérite de Bille et décrit plus particu
     #   return 'Rouge'
 if __name__ == "__main__":
     bille = Bleue(3,4,'Bleue', 25,(12,13))
-    print(bille)
+    #print(bille)
+    bille.coords= ((110,4,(100,100)))
