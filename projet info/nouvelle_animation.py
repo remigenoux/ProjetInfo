@@ -1,3 +1,4 @@
+#
 import math
 
 import numpy as np
@@ -311,6 +312,7 @@ def prends_les_infos(billard) :
 
     intro_font = pygame.font.Font('Pixeltype.ttf', 20)
     intro_font2 = pygame.font.Font('Pixeltype.ttf', 35)
+    intro_font3 = pygame.font.Font('Super Squad.ttf', 20)
 
 
     surface_fond = pygame.Surface((screen_x,screen_y))
@@ -328,6 +330,10 @@ def prends_les_infos(billard) :
     txt_stats = intro_font2.render(
         f'STATS',False, 'black')
     txt_stats_rect = txt_stats.get_rect(center=(50, 70))
+
+
+    txt_couleur = intro_font3.render('Joueur :', True, 'black')
+    txt_couleur_rect = txt_couleur.get_rect(topright=(350, 50))
 
     blanche = pygame.Surface((20, 20), pygame.SRCALPHA)
     pygame.draw.circle(blanche, 'white', (10, 10), 7)
@@ -362,6 +368,9 @@ def prends_les_infos(billard) :
             f'cap : {couple_degre((pygame.mouse.get_pos()[0] - (billard[0].x+screen_x//2-billard.xmax//2), -(pygame.mouse.get_pos()[1] - (billard[0].y+screen_y//2-billard.ymax//2))))}', False,
             'black')
 
+        couleur = pygame.Surface((40, 40), pygame.SRCALPHA)
+        pygame.draw.circle(couleur, english_color(billard[0].attribut), (20, 20), 15)
+
         txt_direction_rect = txt_direction.get_rect(center=(50, 150))
         screen.blit(surface_fond, surface_fond_rect)
         screen.blit(surface_billard, surface_billard_rect)
@@ -373,6 +382,10 @@ def prends_les_infos(billard) :
 
         for i in range(len(surfaces_boules)):
             screen.blit(surfaces_boules[i], (int(billard[i+1].x) -10 +screen_x//2-billard.xmax//2, int(billard[i+1].y) -10 +screen_y//2-billard.ymax//2))
+
+
+        screen.blit(txt_couleur,txt_couleur_rect)
+        screen.blit(couleur, (350,50))
 
         screen.blit(blanche, (int(billard[0].x) -10+screen_x//2-billard.xmax//2, int(billard[0].y)-10+screen_y//2-billard.ymax//2))
         pygame.draw.line(screen,'red',(int(billard[0].x)+screen_x//2-billard.xmax//2,int(billard[0].y)+screen_y//2-billard.ymax//2), infos_placer_fleche(pygame.mouse.get_pos(),(int(billard[0].x)+screen_x//2-billard.xmax//2,int(billard[0].y)+screen_y//2-billard.ymax//2))[0]  )
@@ -404,6 +417,10 @@ def animation_billard(billard,anim_list):
     surface_vitesse.fill('Grey')
     surface_vitesse_rect = surface_vitesse.get_rect(center=(800, 50))
 
+    couleur = pygame.Surface((40,40), pygame.SRCALPHA)
+    pygame.draw.circle(couleur, english_color(billard[0].attribut), (20, 20), 15)
+
+
     txt_vitesse1 = intro_font.render('x1', True, 'black')
     txt_vitesse1_rect = txt_vitesse1.get_rect(center=(800, 50))
 
@@ -412,6 +429,9 @@ def animation_billard(billard,anim_list):
 
     txt_vitesse3 = intro_font.render('x3', True, 'black')
     txt_vitesse3_rect = txt_vitesse3.get_rect(center=(800, 50))
+
+    txt_couleur = intro_font.render ('Joueur :',True, 'black')
+    txt_couleur_rect = txt_couleur.get_rect (topright = (350,50))
 
 
     blanche = pygame.Surface((20, 20), pygame.SRCALPHA)
@@ -453,7 +473,9 @@ def animation_billard(billard,anim_list):
             screen.blit(surfaces_boules[i-2], (int(anim_list[k][i][0] - 10+screen_x//2-billard.xmax//2), int(anim_list[k][i][1] - 10+screen_y//2-billard.ymax//2)))
         temps_match+= anim_list[k][0]
 
+        screen.blit(txt_couleur,txt_couleur_rect)
         screen.blit(blanche, (int(anim_list[k][1][0]- 10+screen_x//2-billard.xmax//2), int(anim_list[k][1][1] - 10+screen_y//2-billard.ymax//2)))
+        screen.blit(couleur,(350,50))
         k += 1
         screen.blit(surface_vitesse,surface_vitesse_rect)
         if (vitesse-1)%3 +1 == 1 :
