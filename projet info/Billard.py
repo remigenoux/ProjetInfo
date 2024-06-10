@@ -1,3 +1,5 @@
+
+
 from numpy.random import randint
 from sympy.solvers import solve
 from sympy import Symbol
@@ -5,6 +7,7 @@ from operator import itemgetter
 
 from Billes import *
 from nouvelle_animation import *
+
 """on importe les classes associées au billes pour 
 pouvoir directement les manipuler sur le Billard"""
 
@@ -59,9 +62,7 @@ class Billard (list):
 
         tour = 1  # initialise le nombre de tour à 1
         J = 'Bleue'  # le joueur 1 joue les Bleues par défaut
-
-        while not self.fin_partie():  # La partie continue jusqu'à ce que la partie se finisse, jusque là, rien d'inquétant
-
+        while not self.fin_partie()[0] :  # La partie continue jusqu'à ce que la partie se finisse, jusque là, rien d'inquétant
             print("c'est le tour", tour, "c'est à ", J, "de jouer")
             print(J)
             self.UnTour(J, self.dt)  # un tour se déroule avec demande de coup & simulation
@@ -80,25 +81,26 @@ class Billard (list):
 
             tour += 1
         print("Bravo ! ")
-
+        return self.fin_partie()[1]
     def fin_partie(self):  # cette fonction sert à déterminer si la partie est finie ou non ( si toutes les billes sont de la même couleur)
         fin = True
         color = self[1].coul  # prends la première couleur
-
+        rejoue = False
         for e in self :  # si un bille a une couleur différente, le jeu n'est pas fini
 
             if e.coul != 'Blanche' and e.coul != color:
                 fin = False
 
         if fin:
-            animation_fin(self,color)
-        return fin  # renvoie un booléen qui répond à la question : la partie est-elle finie ?
+            rejoue = animation_fin(self,color)
+        return [fin,rejoue]  # renvoie un booléen qui répond à la question : la partie est-elle finie ?
     def UnTour(self,J,dt):
 
         if J == 'IA' :
+            intelligence_artificielle = IA(heuristique_1,'facile')
             self[0].attribut = 'Rouge'                  #   on attribue la sous couleur "rouge" le joueur jouant les bleues par défaut
-            force,x,y = self.coup_intelligent()         # joue le coup de l'IA
-
+            force,direction = intelligence_artificielle.coup_intelligent(self)         # joue le coup de l'IA
+            print('force,direction = ',force,direction)
         else :
             self[0].attribut = J
             force, direction = prends_les_infos(self)
@@ -110,7 +112,7 @@ class Billard (list):
         valmax = (self.xmax,self.ymax)
         for e in self:
             e.coords = (e.x + e.direction[0] * e.v * temps , e.y + e.direction[1] * e.v * temps, valmax)
-            e.v -= 0.05
+            e.v -= 0.08
             anim_list[i].append([e.x , e.y , valmax,e.coul])
 
     def simulation(self,dt):
@@ -212,10 +214,112 @@ class Billard (list):
 
         return tcol
 
+
+
+
+def scalaire(u,v):
+    return u[0]*v[0]+u[1]*v[1]
+
+def orthogonal(u):
+    if u[0] != 0 :
+        v1 =  - u[1]/u[0]
+        v2=1
+    else :
+        v1 = 0
+        v2 = 1
+    return (v1*norme2((v1,v2)),v2*norme2((v1,v2)))
+def norme2(u):
+    return (u[0]**2+u[1]**2)**0.5
+
+
+class IA():
+    def __init__(self,heuristique,level):
+        self.heuristique = heuristique
+        self.level = level
+
+    def __str__(self):
+        return 'IA de type {} et de niveau {}'.format(self.heuristique, self.level)
+
+    def copie_billard(self,billard):
+        copie_billard = Billard(billard.xmax,billard.ymax,len(billard) - 1,billard.dt)
+        for i in range (len(copie_billard)):
+            copie_billard.pop()
+        for i in range(len(billard)):
+            if i == 0 :
+                copie_billard.append(Blanche(billard[0].x,billard[0].y,billard[0].attribut))
+            if i>0 and i<len(billard)/2 :
+                copie_billard.append(Bleue(billard[i].x,billard[i].y))
+            if i > len(billard)//2 :
+                copie_billard.append(Rouge(billard[i].x, billard[i].y))
+        return copie_billard
+
+    def coup_intelligent(self,billard):
+        liste_etats_finaux = []
+        liste_coup_possible = []
+        for i in range (1, len(billard) //2 +1):
+
+            vecteur_1 = (billard[i].x - billard[0].x , billard[i].y - billard[0].y)
+            vecteur_1_norme = (vecteur_1[0]/norme2(vecteur_1) , vecteur_1[1]/norme2(vecteur_1))
+
+            vecteur_2 = (vecteur_1[0]+ billard[i]._taille * orthogonal(vecteur_1)[0], vecteur_1[1]+billard[i]._taille*orthogonal(vecteur_1)[1])
+            vecteur_2 = (vecteur_2[0] / norme2(vecteur_2), vecteur_2[1] / norme2(vecteur_2))
+
+            vecteur_3 = (vecteur_1[0]-billard[i]._taille*orthogonal(vecteur_1)[0] , vecteur_1[1]-billard[i]._taille*orthogonal(vecteur_1)[1])
+            vecteur_3 = (vecteur_3[0] / norme2(vecteur_3) , vecteur_3[1] / norme2(vecteur_3))
+
+            liste_coup_possible.append((150,vecteur_1_norme))
+            liste_coup_possible.append((150, vecteur_2))
+            liste_coup_possible.append((150, vecteur_3))
+
+        for i in range (len(liste_coup_possible)):
+            liste_etats_finaux.append(self.copie_billard(billard))
+            liste_etats_finaux[i][0].v = liste_coup_possible[i][0]
+            liste_etats_finaux[i][0].direction = liste_coup_possible[i][1]
+            print('direction embetante = ',liste_etats_finaux[i][0].direction)
+            anim_list = liste_etats_finaux[i].simulation(billard.dt)
+            print('scénario numéro',i)
+
+        intelligence = 0
+        force = 0
+        direction = (0,0)
+
+        for i  in range (len(liste_etats_finaux)) :
+            f = self.heuristique
+            if f(liste_etats_finaux[i])>intelligence :
+                intelligence = f(liste_etats_finaux[i])
+                force = liste_coup_possible[i][0]
+                direction = liste_coup_possible[i][1]
+        return force, direction
+
+def heuristique_1 (billard):
+    intelligence = 0.1
+    distance_moy = 0
+    barycentre_x = 0
+    barycentre_y = 0
+    for e in billard :
+        if e.coul == 'Rouge':
+            intelligence += 1
+        if e.coul == 'Bleue':
+            distance_moy += norme2((billard[0].x - e.x,billard[0].y -e.y))
+            barycentre_x += e.x
+            barycentre_y += e.y
+    distance_moy = distance_moy/len(billard)//2 *np.sqrt(2)/norme2((billard.xmax,billard.ymax))
+    barycentre_x = barycentre_x/len(billard)//2 /billard.xmax
+    barycentre_y = barycentre_y/len(billard)//2 /billard.xmax
+    dist_barycentre = norme2 ((billard[0].x - barycentre_x,billard[0].y - barycentre_y))
+    intelligence += distance_moy + dist_barycentre
+    return intelligence
+
+def heuristique_2(billard):
+    return randint(0,8)
+
 if __name__ == "__main__":
-    n,x,y,j = intro()
-    billard = Billard(x,y,n,1/60)
-    billard.partie(j)
+    rejoue = True
+    while rejoue :
+        n,x,y,j = intro()
+        billard = Billard(x,y,n,1/60)
+        rejoue = billard.partie(j)
+
 
 
 
